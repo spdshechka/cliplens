@@ -8,9 +8,8 @@ ClipLens is a keyboard-first clipboard popup that sits on top of [cliphist](http
 
 ## Screenshot
 
-![ClipLens screenshot](./main.png)
+![ClipLens screenshot](./main.jpg)
 
-*To add a screenshot: create an `assets/` folder in the project root and place `screenshot.png` there.*
 
 ## Features
 
@@ -123,11 +122,4 @@ ClipLens never modifies cliphist data except when you explicitly click **Clear H
 
 ## Roadmap
 
-- [ ] Better image support (SVG, raw formats)
-- [ ] Themes / accent color picker
-- [ ] AUR package
-- [ ] Emoji picker companion mode
-
-## License
-
-MIT
+- [ ] Themes
