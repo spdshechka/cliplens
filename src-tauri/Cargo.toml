@@ -1,0 +1,19 @@
+[package]
+name = "cliplens"
+version = "0.1.0"
+description = "ClipLens — Hyprland clipboard popup"
+authors = ["spdshka"]
+edition = "2021"
+
+[lib]
+name = "cliplens_lib"
+path = "src/lib.rs"
+crate-type = ["rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
