@@ -1,98 +1,133 @@
 # ClipLens
 
-A keyboard-first clipboard popup for Hyprland — a polished frontend for [cliphist](https://github.com/sentriz/cliphist).
+**A beautiful clipboard picker for Hyprland.**
 
-ClipLens reads your clipboard history from cliphist and presents it in a fast, glass-style launcher popup. It is **not** a clipboard daemon — cliphist handles storage, ClipLens handles display.
+ClipLens is a keyboard-first clipboard popup that sits on top of [cliphist](https://github.com/sentriz/cliphist). Press a key, search your history, copy and go. It is not a clipboard daemon — cliphist handles storage, ClipLens handles everything you see.
+
+> Built for Arch Linux + Hyprland. Not cross-platform.
+
+## Screenshot
+
+![ClipLens screenshot](./main.png)
+
+*To add a screenshot: create an `assets/` folder in the project root and place `screenshot.png` there.*
+
+## Features
+
+- Dark glass UI — no window decorations, rounded panel, accent glow
+- Keyboard-first — navigate, search, copy, and close without touching the mouse
+- Full-text search across clipboard history
+- Content-aware type badges — URL, email, shell command, git, code, image
+- Image preview — decodes and renders PNG / JPEG / WEBP / GIF inline
+- Pinned items — persist across restarts, always shown at the top
+- Clear history — wipes cliphist database with confirmation
+- Graceful error states — works in browse-only mode if `wl-copy` is missing
 
 ## Requirements
 
-- [`cliphist`](https://github.com/sentriz/cliphist) — clipboard history storage
-- [`wl-clipboard`](https://github.com/bugaevc/wl-clipboard) — provides `wl-copy`
+**Runtime:**
+
+- Hyprland (or any Wayland compositor)
+- [`cliphist`](https://github.com/sentriz/cliphist)
+- [`wl-clipboard`](https://github.com/bugaevc/wl-clipboard)
+
+**Build:**
+
+- Rust (stable)
+- Node.js 18+
+- Tauri v2 system dependencies
+
+Install everything on Arch:
 
 ```sh
-# Arch / CachyOS
-sudo pacman -S cliphist wl-clipboard
+sudo pacman -S cliphist wl-clipboard webkit2gtk-4.1 base-devel curl wget file openssl appmenu-gtk-module librsvg
 ```
 
-You also need cliphist running as a Wayland clipboard watcher. Add to your Hyprland config:
+## Setup
+
+**1. Start cliphist daemon**
+
+Add to `~/.config/hypr/hyprland.conf`:
 
 ```
 exec-once = wl-paste --watch cliphist store
 ```
 
-## Dev
+**2. Clone and build**
 
 ```sh
+git clone https://github.com/yourname/cliplens ~/projects/cliplens
 cd ~/projects/cliplens
 npm install
-npm run tauri dev
-```
-
-## Build
-
-```sh
 npm run tauri build
 ```
 
-## Hyprland integration
+The binary will be at `src-tauri/target/release/cliplens`.
 
-Bind `SUPER+V` to open ClipLens:
+**3. Bind to a key in Hyprland**
 
 ```
-# ~/.config/hypr/hyprland.conf
+bind = SUPER, V, exec, /path/to/cliplens
 
-bind = SUPER, V, exec, /path/to/cliplens   # or: ~/.cargo/bin/cliplens after build
-
-windowrulev2 = float,         class:(ClipLens)
-windowrulev2 = center,        class:(ClipLens)
-windowrulev2 = size 820 560,  class:(ClipLens)
-windowrulev2 = noanim,        class:(ClipLens)
-windowrulev2 = stayfocused,   class:(ClipLens)
+windowrulev2 = float,        class:(ClipLens)
+windowrulev2 = center,       class:(ClipLens)
+windowrulev2 = size 820 560, class:(ClipLens)
+windowrulev2 = noanim,       class:(ClipLens)
+windowrulev2 = stayfocused,  class:(ClipLens)
 ```
 
-> **Note:** verify the exact `class` and `title` with `hyprctl clients` after launching.
-> The class is set to `ClipLens` by Tauri's `productName` field in `tauri.conf.json`.
+> Run `hyprctl clients` while ClipLens is open to confirm the exact `class` and `title` values on your system.
 
-### Blur / opacity
+**Optional — compositor blur**
 
-ClipLens uses an **opaque window** to avoid the Wayland `Error 71 (Protocol error)` crash that
-`transparent = true` triggers on some compositors. The glass look is CSS-only.
-
-For blur behind the window, use Hyprland's compositor blur instead:
+ClipLens uses an opaque window by default (transparent Tauri windows trigger a Wayland protocol error on some setups). The glass effect is CSS-only. To add blur behind the window:
 
 ```
 windowrulev2 = opacity 0.92 0.92, class:(ClipLens)
 layerrule = blur, class:(ClipLens)
 ```
 
-Or simply leave the window fully opaque — the dark glass style still looks clean without wallpaper blur.
+## Development
+
+```sh
+npm install
+WEBKIT_DISABLE_DMABUF_RENDERER=1 npm run tauri dev
+```
+
+> `WEBKIT_DISABLE_DMABUF_RENDERER=1` prevents a WebKit/DMA-BUF crash that affects some GPU drivers on Wayland. Set it in your shell config if you hit a blank window or crash on startup.
 
 ## Keyboard shortcuts
 
 | Key | Action |
-|-----|--------|
-| `↑` / `↓` | Navigate list |
-| `PgUp` / `PgDn` | Jump 6 items |
-| `Home` / `End` | First / last item |
+|---|---|
+| `↑` `↓` | Navigate list |
+| `PgUp` `PgDn` | Jump 6 items |
+| `Home` `End` | First / last item |
 | `Enter` | Copy selected |
 | `Ctrl+Enter` | Copy and close |
 | `Esc` | Close |
 | `/` | Focus search |
 
-## Features
+## Architecture
 
-- Glass-style dark popup, no window decorations
-- Full keyboard navigation, search focused on open
-- Type detection: URL, email, shell command, git, code, image/binary
-- Pinned items — persisted in `localStorage`, shown at top, no cliphist mutation
-- Preview panel with context-aware display (mono for code/commands, URL card, etc.)
-- Action buttons: Copy, Copy & Close, Pin/Unpin, Remove from view
-- Binary/image entries shown as placeholder — raw bytes never displayed
-- Graceful degradation when cliphist or wl-copy is missing
+| Layer | Technology |
+|---|---|
+| Window shell | Tauri v2 |
+| Frontend | SvelteKit + Svelte 5 + TypeScript |
+| Styles | Tailwind CSS v3 + CSS custom properties |
+| Clipboard backend | cliphist (external, not bundled) |
+| Copy | wl-copy (from wl-clipboard) |
+| Rust commands | `list_clipboard_items`, `copy_clipboard_item`, `preview_image_item`, `clear_clipboard_history`, `check_dependencies` |
 
-## Stack
+ClipLens never modifies cliphist data except when you explicitly click **Clear History**.
 
-- [Tauri v2](https://tauri.app) + Rust backend
-- [SvelteKit](https://kit.svelte.dev) + Svelte 5 + TypeScript
-- [Tailwind CSS v3](https://tailwindcss.com)
-- cliphist + wl-copy (no bundled daemon)
+## Roadmap
+
+- [ ] Better image support (SVG, raw formats)
+- [ ] Themes / accent color picker
+- [ ] AUR package
+- [ ] Emoji picker companion mode
+
+## License
+
+MIT
