@@ -8,7 +8,7 @@ ClipLens is a keyboard-first clipboard popup that sits on top of [cliphist](http
 
 ## Screenshot
 
-![ClipLens screenshot](./main.jpg)
+![ClipLens screenshot](./assets/screenshots/main.jpg)
 
 
 ## Features
